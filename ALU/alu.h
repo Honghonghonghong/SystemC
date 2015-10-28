@@ -16,16 +16,18 @@ SC_MODULE(MUX_2X1) {
     }
 };
 
-SC_MODULE(MUX_4X1) {
+SC_MODULE(MUX_5X2) {
 	sc_in<sc_uint<4> > op;
 	sc_in<uint32_t> addR, subR, andR, orrR;
 	sc_out<uint32_t> out;
+	sc_in<bool> reset;
+	sc_out<bool> zero;
 
-	void do_mux_4x1();
+	void do_mux_5x2();
 
-	SC_CTOR(MUX_4X1) {
-		SC_METHOD(do_mux_4x1);
-		sensitive << op << addR << subR << andR<< orrR;
+	SC_CTOR(MUX_5X2) {
+		SC_METHOD(do_mux_5x2);
+		sensitive << op << addR << subR << andR<< orrR << reset;
 		out.initialize(0);
 	}
 };
@@ -83,12 +85,12 @@ SC_MODULE(ORRM){
 
 SC_MODULE(ALU) {
     sc_in<uint32_t> in_a, in_b, in_imm;
-    sc_in<bool> is_imm;
+    sc_in<bool> is_imm, in_reset;
 	sc_in<sc_uint<4> > in_op;
     sc_out<uint32_t> result;
-
+    sc_out<bool> zero;
     MUX_2X1 mux_in2;
-	MUX_4X1 mux_4x1;
+	MUX_5X2 mux_5x2;
     ADDER   adder;
 	SUBM	subm;
 	ANDM	andm;
@@ -96,27 +98,34 @@ SC_MODULE(ALU) {
 	
     sc_signal<uint32_t> sig_mux_in2_out;
 	sc_signal<uint32_t> sig_add_result, sig_sub_result, sig_and_result, sig_orr_result;
+	
+	void do_alu();
 
     SC_CTOR(ALU) :
             mux_in2("mux_in2"),
-			mux_4x1("mux_4x1"),
+			mux_5x2("mux_5x2"),
             adder("adder"),
 			subm("subm"),
 			andm("andm"),
 			orrm("orrm")
 			
     {
+    	SC_METHOD(do_alu);
+    	sensitive << result;
+    
         mux_in2.select(is_imm);
         mux_in2.in_0(in_b);
         mux_in2.in_1(in_imm);
         mux_in2.out(sig_mux_in2_out);
 
-		mux_4x1.op(in_op);
-		mux_4x1.andR(sig_and_result);
-		mux_4x1.addR(sig_add_result);
-		mux_4x1.orrR(sig_orr_result);
-		mux_4x1.subR(sig_sub_result);
-		mux_4x1.out(result);
+		mux_5x2.op(in_op);
+		mux_5x2.andR(sig_and_result);
+		mux_5x2.addR(sig_add_result);
+		mux_5x2.orrR(sig_orr_result);
+		mux_5x2.subR(sig_sub_result);
+		mux_5x2.reset(in_reset);
+		mux_5x2.out(result);
+		mux_5x2.zero(zero);
 
         adder.a(in_a);
         adder.b(sig_mux_in2_out);
@@ -136,6 +145,7 @@ SC_MODULE(ALU) {
 		orrm.result(sig_orr_result);
 
         result.initialize(0);
+        zero.initialize(1);
     }
 };
 

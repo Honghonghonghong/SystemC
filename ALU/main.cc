@@ -7,6 +7,7 @@ int sc_main(int argc, char **argv) {
     sc_signal<uint32_t> sig_alu_in_a, sig_alu_in_b, sig_alu_in_imm;
     sc_signal<uint32_t> sig_alu_result;
 	sc_signal<sc_uint<4> > sig_alu_in_op;
+	sc_signal<bool> sig_alu_in_reset, sig_alu_zero;
 
     sc_set_time_resolution(1, SC_NS);
     //sc_set_default_time_unit(1, SC_NS);
@@ -19,6 +20,9 @@ int sc_main(int argc, char **argv) {
     alu.in_imm(sig_alu_in_imm);
     alu.result(sig_alu_result);
 	alu.in_op(sig_alu_in_op);
+	alu.in_reset(sig_alu_in_reset);
+	alu.zero(sig_alu_zero);
+	
 
     TEST test("test");
     test.clock(sig_clock);
@@ -27,6 +31,7 @@ int sc_main(int argc, char **argv) {
     test.alu_in_b(sig_alu_in_b);
     test.alu_in_imm(sig_alu_in_imm);
     test.alu_result(sig_alu_result);
+    test.alu_in_reset(sig_alu_in_reset);
     
     test.alu_in_op(sig_alu_in_op);
 
@@ -40,6 +45,8 @@ int sc_main(int argc, char **argv) {
     sc_trace(tf, alu.in_imm, "alu.in_imm");
     sc_trace(tf, alu.is_imm, "alu.is_imm");
     sc_trace(tf, alu.result, "alu.result");
+    sc_trace(tf, alu.in_reset, "alu.in_reset");
+    sc_trace(tf, alu.zero, "alu.zero");
 
     sc_start(200, SC_NS);
     sc_close_vcd_trace_file(tf);
